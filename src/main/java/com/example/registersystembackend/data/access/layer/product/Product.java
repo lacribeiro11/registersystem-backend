@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
@@ -28,6 +29,10 @@ public class Product {
 
     @PositiveOrZero
     private int amount;
+
+    @PositiveOrZero
+    @Digits(integer = 9, fraction = 2)
+    private double price;
 
     private boolean isDeleted;
 
@@ -79,6 +84,14 @@ public class Product {
         isDeleted = deleted;
     }
 
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -104,6 +117,7 @@ public class Product {
                 .add("code='" + code + "'")
                 .add("foodType=" + foodType)
                 .add("amount=" + amount)
+                .add("price=" + price)
                 .add("isDeleted=" + isDeleted)
                 .toString();
     }

@@ -2,6 +2,7 @@ package com.example.registersystembackend.presentation.layer.product;
 
 import com.example.registersystembackend.data.access.layer.product.FoodType;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
@@ -24,6 +25,10 @@ class ProductDto {
 
     @PositiveOrZero
     private int amount;
+
+    @PositiveOrZero
+    @Digits(integer = 9, fraction = 2)
+    private double price;
 
     public UUID getId() {
         return id;
@@ -65,6 +70,14 @@ class ProductDto {
         this.amount = amount;
     }
 
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -90,6 +103,7 @@ class ProductDto {
                 .add("code='" + code + "'")
                 .add("foodType=" + foodType)
                 .add("amount=" + amount)
+                .add("price=" + price)
                 .toString();
     }
 }
