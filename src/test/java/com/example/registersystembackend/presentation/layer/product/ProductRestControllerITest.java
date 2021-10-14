@@ -204,6 +204,15 @@ class ProductRestControllerITest {
 
             resultActions.andExpect(status().isBadRequest());
         }
+
+        @Test
+        void priceIsNegative() throws Exception {
+            final ProductDto productDto = newProductDto("code");
+            productDto.setPrice(-1);
+            final ResultActions resultActions = saveProduct(JsonMapper.objectToString(productDto));
+
+            resultActions.andExpect(status().isBadRequest());
+        }
     }
 
     @Nested
