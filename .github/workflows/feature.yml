@@ -1,4 +1,4 @@
-name: Feature CI
+name: Build CI
 
 on:
   push:
