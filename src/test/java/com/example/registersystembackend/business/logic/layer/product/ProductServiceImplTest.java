@@ -2,6 +2,7 @@ package com.example.registersystembackend.business.logic.layer.product;
 
 import com.example.registersystembackend.data.access.layer.product.Product;
 import com.example.registersystembackend.data.access.layer.product.ProductRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,6 +27,8 @@ class ProductServiceImplTest {
 
     @Mock
     private ProductRepository productRepository;
+    @Mock
+    private ObjectMapper mapper;
 
     @InjectMocks
     private ProductServiceImpl productService;
@@ -137,5 +142,29 @@ class ProductServiceImplTest {
         when(productRepository.findProductByIsDeletedIsFalseAndCode(product.getCode())).thenReturn(Optional.empty());
 
         assertThrows(NoSuchElementException.class, () -> productService.getProductByCode(product.getCode()));
+    }
+
+    @Test
+    void getProductsByIds() {
+        final Product product = new Product();
+        product.setCode("code");
+        final Set<Product> expectedProducts = Set.of(product);
+        final Set<UUID> expectedId = Set.of(product.getId());
+        when(productRepository.findAllByIsDeletedIsFalseAndIdIn(expectedId)).thenReturn(expectedProducts);
+
+        Set<Product> actualProducts = productService.getProductByIds(expectedId);
+
+        assertEquals(expectedProducts, actualProducts);
+    }
+
+    @Test
+    void getProductsByIdsButOneIdDoesNotExist() {
+        final Product product = new Product();
+        product.setCode("code");
+        final Set<Product> expectedProducts = Set.of(product);
+        final Set<UUID> expectedId = Set.of(product.getId(), UUID.randomUUID());
+        when(productRepository.findAllByIsDeletedIsFalseAndIdIn(expectedId)).thenReturn(expectedProducts);
+
+        assertThrows(NoSuchElementException.class, () -> productService.getProductByIds(expectedId));
     }
 }

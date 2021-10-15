@@ -1,13 +1,14 @@
 package com.example.registersystembackend.data.access.layer.bill;
 
-import com.example.registersystembackend.data.access.layer.position.Position;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -23,8 +24,11 @@ public class Bill {
     private LocalDateTime timestamp = LocalDateTime.now();
 
     @NotEmpty
-    @DBRef
-    private Set<Position> positions;
+    private Set<Position> positions = new HashSet<>();
+
+    @Positive
+    @Digits(integer = 9, fraction = 2)
+    private double totalPrice;
 
     private boolean isDeleted;
 
@@ -50,6 +54,14 @@ public class Bill {
 
     public void setPositions(Set<Position> positions) {
         this.positions = positions;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = totalPrice;
     }
 
     public boolean isDeleted() {
@@ -83,6 +95,7 @@ public class Bill {
                 .add("id=" + id)
                 .add("timestamp=" + timestamp)
                 .add("positions=" + positions)
+                .add("totalPrice=" + totalPrice)
                 .add("isDeleted=" + isDeleted)
                 .toString();
     }

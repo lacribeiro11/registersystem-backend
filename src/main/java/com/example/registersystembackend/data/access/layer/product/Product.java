@@ -76,6 +76,10 @@ public class Product {
         this.amount = amount;
     }
 
+    public void subtractAmount(int amount) {
+        this.amount -= amount;
+    }
+
     public boolean isDeleted() {
         return isDeleted;
     }
