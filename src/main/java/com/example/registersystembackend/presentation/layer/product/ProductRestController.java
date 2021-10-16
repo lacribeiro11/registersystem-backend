@@ -33,19 +33,19 @@ class ProductRestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getProduct(@PathVariable UUID id) {
+    ResponseEntity<ProductDto> getProduct(@PathVariable UUID id) {
         final Product product = productService.getProduct(id);
         return ResponseEntity.ok(productMapper.documentToDto(product));
     }
 
     @PostMapping
-    public ResponseEntity<Void> saveProduct(@RequestBody @Valid ProductDto productDto) {
+    ResponseEntity<Void> saveProduct(@RequestBody @Valid ProductDto productDto) {
         productService.saveProduct(productMapper.dtoToDocument(productDto));
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<ProductDto>> getAllProducts() {
+    ResponseEntity<List<ProductDto>> getAllProducts() {
         final List<ProductDto> productDtoList = productService.getAllProducts()
                 .stream()
                 .map(productMapper::documentToDto)
@@ -54,13 +54,13 @@ class ProductRestController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable UUID id) {
+    ResponseEntity<Void> deleteProduct(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/code/{code}")
-    public ResponseEntity<ProductDto> getProductByCode(@PathVariable String code) {
+    ResponseEntity<ProductDto> getProductByCode(@PathVariable String code) {
         return ResponseEntity.ok(productMapper.documentToDto(productService.getProductByCode(code)));
     }
 }
