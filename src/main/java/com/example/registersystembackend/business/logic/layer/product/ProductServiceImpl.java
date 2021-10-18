@@ -50,8 +50,8 @@ class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAllByIsDeletedIsFalseOrderByNameAsc();
+    public List<Product> getAllProducts(String name) {
+        return productRepository.findProductsByName(name);
     }
 
     @Override

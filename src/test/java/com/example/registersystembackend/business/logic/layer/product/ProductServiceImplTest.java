@@ -101,9 +101,9 @@ class ProductServiceImplTest {
     void getAllProducts() {
         final Product product = Mockito.mock(Product.class);
         final List<Product> expectedProductList = List.of(product);
-        when(productRepository.findAllByIsDeletedIsFalseOrderByNameAsc()).thenReturn(expectedProductList);
+        when(productRepository.findProductsByName(null)).thenReturn(expectedProductList);
 
-        final List<Product> actualProductList = productService.getAllProducts();
+        final List<Product> actualProductList = productService.getAllProducts(null);
 
         assertEquals(expectedProductList, actualProductList);
     }

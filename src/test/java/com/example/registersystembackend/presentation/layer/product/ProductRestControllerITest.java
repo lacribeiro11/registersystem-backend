@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.List;
 import java.util.UUID;
@@ -47,9 +48,6 @@ class ProductRestControllerITest {
 
     @Nested
     class GetProduct {
-        private final TypeReference<List<ProductDto>> PRODUCT_DTO_LIST_TYPE_REFERENCE = new TypeReference<>() {
-        };
-
         @Test
         void happyPath() throws Exception {
             final ProductDto product = persistProduct("code");
@@ -83,15 +81,18 @@ class ProductRestControllerITest {
             ProductRestControllerITest.this.getProduct(id)
                     .andExpect(status().isMethodNotAllowed());
         }
+    }
+
+    @Nested
+    class GetAllProducts {
+        private final TypeReference<List<ProductDto>> PRODUCT_DTO_LIST_TYPE_REFERENCE = new TypeReference<>() {
+        };
 
         @Test
-        void getAllProductsSorted() throws Exception {
-            final ProductDto productDto1 = persistProduct("code1");
-            final ProductDto productDto2 = persistProduct("code2");
-            final ProductDto productDto3 = persistProduct("code3");
-            final List<ProductDto> expectedProductDtos = List.of(productDto1, productDto2, productDto3);
+        void sorted() throws Exception {
+            final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts();
+            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts(null);
 
             resultActions.andExpect(status().isOk());
             final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
@@ -99,8 +100,8 @@ class ProductRestControllerITest {
         }
 
         @Test
-        void getAllProductsDatabaseIsEmpty() throws Exception {
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts();
+        void databaseIsEmpty() throws Exception {
+            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts(null);
 
             resultActions.andExpect(status().isOk());
             final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
@@ -108,7 +109,7 @@ class ProductRestControllerITest {
         }
 
         @Test
-        void getAllNonDeletedProducts() throws Exception {
+        void allNonDeletedProducts() throws Exception {
             final ProductDto productDto1 = persistProduct("code1");
             final ProductDto deleteDto2 = persistProduct("delete2");
             final ProductDto deleteDto3 = persistProduct("delete3");
@@ -123,11 +124,52 @@ class ProductRestControllerITest {
             });
             final List<ProductDto> expectedProductDtos = List.of(productDto1);
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts();
+            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts(null);
 
             resultActions.andExpect(status().isOk());
             final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
             assertEquals(expectedProductDtos, actualProductDtos);
+        }
+
+        @Test
+        void nameIsEmpty() throws Exception {
+            final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
+
+            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts("");
+
+            resultActions.andExpect(status().isOk());
+            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
+            assertEquals(expectedProductDtos, actualProductDtos);
+        }
+
+        @Test
+        void productWithThisNameDoesNotExist() throws Exception {
+            persistDefaultProductDtos();
+
+            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts("does not exist");
+
+            resultActions.andExpect(status().isOk());
+            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
+            assertEquals(List.of(), actualProductDtos);
+        }
+
+        @Test
+        void findOne() throws Exception {
+            final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
+
+            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts("code1");
+
+            resultActions.andExpect(status().isOk());
+            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
+            assertEquals(1, actualProductDtos.size());
+            assertEquals(expectedProductDtos.get(0), actualProductDtos.get(0));
+        }
+
+        private List<ProductDto> persistDefaultProductDtos() {
+            final ProductDto productDto1 = persistProduct("code1");
+            final ProductDto productDto2 = persistProduct("code2");
+            final ProductDto productDto3 = persistProduct("code3");
+            return List.of(productDto1, productDto2, productDto3);
         }
     }
 
@@ -299,8 +341,12 @@ class ProductRestControllerITest {
                 .contentType(MediaType.APPLICATION_JSON));
     }
 
-    private ResultActions getAllProducts() throws Exception {
-        return mockMvc.perform(get(PRODUCT_URL + "/all"));
+    private ResultActions getAllProducts(String name) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder = get(PRODUCT_URL + "/all");
+        if (name != null) {
+            requestBuilder.param("name", name);
+        }
+        return mockMvc.perform(requestBuilder);
     }
 
     private ResultActions deleteProduct(String id) throws Exception {

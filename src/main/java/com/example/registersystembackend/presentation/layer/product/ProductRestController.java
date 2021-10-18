@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
@@ -45,8 +46,8 @@ class ProductRestController {
     }
 
     @GetMapping("/all")
-    ResponseEntity<List<ProductDto>> getAllProducts() {
-        final List<ProductDto> productDtoList = productService.getAllProducts()
+    ResponseEntity<List<ProductDto>> getAllProducts(@RequestParam(required = false) String name) {
+        final List<ProductDto> productDtoList = productService.getAllProducts(name)
                 .stream()
                 .map(productMapper::documentToDto)
                 .collect(Collectors.toList());

@@ -59,9 +59,9 @@ class ProductRestControllerTest {
 
     @Test
     void getAllProducts() {
-        when(productService.getAllProducts()).thenReturn(List.of(product));
+        when(productService.getAllProducts(null)).thenReturn(List.of(product));
 
-        ResponseEntity<List<ProductDto>> responseEntity = productRestController.getAllProducts();
+        ResponseEntity<List<ProductDto>> responseEntity = productRestController.getAllProducts(null);
 
         assertEquals(200, responseEntity.getStatusCodeValue());
         assertEquals(List.of(productDto), responseEntity.getBody());
