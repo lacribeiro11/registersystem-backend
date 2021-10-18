@@ -1,5 +1,6 @@
 package com.example.registersystembackend.data.access.layer.product;
 
+import com.querydsl.core.annotations.QueryEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -12,6 +13,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
 
+@QueryEntity
 @Document
 public class Product {
 

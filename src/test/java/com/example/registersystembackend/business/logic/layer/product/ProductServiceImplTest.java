@@ -9,6 +9,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -101,11 +103,11 @@ class ProductServiceImplTest {
     void getAllProducts() {
         final Product product = Mockito.mock(Product.class);
         final List<Product> expectedProductList = List.of(product);
-        when(productRepository.findAllByIsDeletedIsFalseOrderByNameAsc()).thenReturn(expectedProductList);
+        when(productRepository.findProductsByName(null, null)).thenReturn(new PageImpl<>(expectedProductList));
 
-        final List<Product> actualProductList = productService.getAllProducts();
+        final Page<Product> actualProductList = productService.getAllProducts(null, null);
 
-        assertEquals(expectedProductList, actualProductList);
+        assertEquals(expectedProductList, actualProductList.getContent());
     }
 
     @Test
