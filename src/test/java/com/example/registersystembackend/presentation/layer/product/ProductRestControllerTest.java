@@ -9,9 +9,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -59,12 +62,12 @@ class ProductRestControllerTest {
 
     @Test
     void getAllProducts() {
-        when(productService.getAllProducts(null)).thenReturn(List.of(product));
+        when(productService.getAllProducts(null, null)).thenReturn(new PageImpl<>(List.of(product)));
 
-        ResponseEntity<List<ProductDto>> responseEntity = productRestController.getAllProducts(null);
+        ResponseEntity<Page<ProductDto>> responseEntity = productRestController.getAllProducts(null, null);
 
         assertEquals(200, responseEntity.getStatusCodeValue());
-        assertEquals(List.of(productDto), responseEntity.getBody());
+        assertEquals(List.of(productDto), Objects.requireNonNull(responseEntity.getBody()).getContent());
     }
 
     @Test

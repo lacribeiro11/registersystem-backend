@@ -7,9 +7,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
@@ -50,8 +51,8 @@ class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAllProducts(String name) {
-        return productRepository.findProductsByName(name);
+    public Page<Product> getAllProducts(String name, Pageable pageable) {
+        return productRepository.findProductsByName(name, pageable);
     }
 
     @Override

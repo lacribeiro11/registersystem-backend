@@ -1,8 +1,9 @@
 package com.example.registersystembackend.business.logic.layer.product;
 
 import com.example.registersystembackend.data.access.layer.product.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -11,7 +12,7 @@ public interface ProductService {
 
     void deleteProduct(UUID id);
 
-    List<Product> getAllProducts(String name);
+    Page<Product> getAllProducts(String name, Pageable pageable);
 
     Product getProduct(UUID id);
 

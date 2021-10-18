@@ -4,6 +4,7 @@ import com.example.registersystembackend.data.access.layer.product.FoodType;
 import com.example.registersystembackend.data.access.layer.product.Product;
 import com.example.registersystembackend.data.access.layer.product.ProductRepository;
 import com.example.registersystembackend.presentation.layer.JsonMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -18,8 +19,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.util.CollectionUtils;
 
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,9 +59,9 @@ class ProductRestControllerITest {
     class GetProduct {
         @Test
         void happyPath() throws Exception {
-            final ProductDto product = persistProduct("code");
+            final ProductDto product = persistProductDto("code");
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getProduct(product.getId().toString());
+            final ResultActions resultActions = getProduct(product.getId().toString());
 
             resultActions.andExpect(status().isOk());
 
@@ -64,55 +73,53 @@ class ProductRestControllerITest {
         void notFound() throws Exception {
             UUID id = UUID.randomUUID();
 
-            ProductRestControllerITest.this.getProduct(id.toString())
+            getProduct(id.toString())
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(getErrorMessage(String.format("There is no product with this id: %s", id))));
         }
 
         @Test
         void badId() throws Exception {
-            ProductRestControllerITest.this.getProduct("badId").andExpect(status().isBadRequest());
+            getProduct("badId").andExpect(status().isBadRequest());
         }
 
         @ParameterizedTest
         @NullAndEmptySource
         void emptyOrNull(String id) throws Exception {
 
-            ProductRestControllerITest.this.getProduct(id)
+            getProduct(id)
                     .andExpect(status().isMethodNotAllowed());
         }
     }
 
     @Nested
     class GetAllProducts {
-        private final TypeReference<List<ProductDto>> PRODUCT_DTO_LIST_TYPE_REFERENCE = new TypeReference<>() {
+        private final TypeReference<Map> PRODUCT_DTO_PAGE_REFERENCE = new TypeReference<>() {
         };
 
         @Test
-        void sorted() throws Exception {
+        void happyPath() throws Exception {
             final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts(null);
+            final ResultActions resultActions = getAllProducts(null, null, null, null);
 
             resultActions.andExpect(status().isOk());
-            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
-            assertEquals(expectedProductDtos, actualProductDtos);
+            assertEquals(expectedProductDtos.subList(0, 10), getProductDtos(resultActions));
         }
 
         @Test
         void databaseIsEmpty() throws Exception {
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts(null);
+            final ResultActions resultActions = getAllProducts(null, null, null, null);
 
             resultActions.andExpect(status().isOk());
-            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
-            assertEquals(List.of(), actualProductDtos);
+            assertEquals(List.of(), getProductDtos(resultActions));
         }
 
         @Test
         void allNonDeletedProducts() throws Exception {
-            final ProductDto productDto1 = persistProduct("code1");
-            final ProductDto deleteDto2 = persistProduct("delete2");
-            final ProductDto deleteDto3 = persistProduct("delete3");
+            final ProductDto productDto1 = persistProductDto("code1");
+            final ProductDto deleteDto2 = persistProductDto("delete2");
+            final ProductDto deleteDto3 = persistProductDto("delete3");
 
             productRepository.findById(deleteDto2.getId()).ifPresent(p -> {
                 p.setDeleted(true);
@@ -124,52 +131,108 @@ class ProductRestControllerITest {
             });
             final List<ProductDto> expectedProductDtos = List.of(productDto1);
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts(null);
+            final ResultActions resultActions = getAllProducts(null, null, null, null);
 
             resultActions.andExpect(status().isOk());
-            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
-            assertEquals(expectedProductDtos, actualProductDtos);
+            assertEquals(expectedProductDtos, getProductDtos(resultActions));
         }
 
         @Test
         void nameIsEmpty() throws Exception {
             final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts("");
+            final ResultActions resultActions = getAllProducts("", null, null, null);
 
             resultActions.andExpect(status().isOk());
-            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
-            assertEquals(expectedProductDtos, actualProductDtos);
+            assertEquals(expectedProductDtos.subList(0, 10), getProductDtos(resultActions));
         }
 
         @Test
         void productWithThisNameDoesNotExist() throws Exception {
             persistDefaultProductDtos();
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts("does not exist");
+            final ResultActions resultActions = getAllProducts("does not exist", null, null, null);
 
             resultActions.andExpect(status().isOk());
-            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
-            assertEquals(List.of(), actualProductDtos);
+            assertEquals(List.of(), getProductDtos(resultActions));
         }
 
         @Test
         void findOne() throws Exception {
             final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
 
-            final ResultActions resultActions = ProductRestControllerITest.this.getAllProducts("code1");
+            final ResultActions resultActions = getAllProducts("name01", null, null, null);
 
             resultActions.andExpect(status().isOk());
-            final List<ProductDto> actualProductDtos = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_LIST_TYPE_REFERENCE);
+            final List<ProductDto> actualProductDtos = getProductDtos(resultActions);
             assertEquals(1, actualProductDtos.size());
             assertEquals(expectedProductDtos.get(0), actualProductDtos.get(0));
         }
 
+        @Test
+        void secondPage() throws Exception {
+            final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
+
+            final ResultActions resultActions = getAllProducts(null, 1, null, null);
+
+            resultActions.andExpect(status().isOk());
+            assertEquals(expectedProductDtos.subList(10, 20), getProductDtos(resultActions));
+        }
+
+        @Test
+        void pageSize5() throws Exception {
+            final List<ProductDto> expectedProductDtos = persistDefaultProductDtos();
+
+            final ResultActions resultActions = getAllProducts(null, null, 5, null);
+
+            resultActions.andExpect(status().isOk());
+            assertEquals(expectedProductDtos.subList(0, 5), getProductDtos(resultActions));
+        }
+
+        @Test
+        void sorting() throws Exception {
+            final List<ProductDto> expectedProductDtos = persistDefaultProductDtos().subList(10, 20);
+            Collections.reverse(expectedProductDtos);
+
+            final ResultActions resultActions = getAllProducts(null, null, null, List.of("name,desc"));
+
+            resultActions.andExpect(status().isOk());
+            assertEquals(expectedProductDtos, getProductDtos(resultActions));
+        }
+
+        private List<ProductDto> getProductDtos(ResultActions resultActions) throws JsonProcessingException, UnsupportedEncodingException {
+            final Map map = JsonMapper.resultToObject(resultActions, PRODUCT_DTO_PAGE_REFERENCE);
+            final List content = (List) map.get("content");
+            List<ProductDto> products = new ArrayList<>();
+            for (Object row : content) {
+                LinkedHashMap<String, Object> item = (LinkedHashMap<String, Object>) row;
+                final ProductDto productDto = newProductDto(item.get("name").toString(),
+                        item.get("code").toString(),
+                        FoodType.valueOf(item.get("foodType").toString()),
+                        Integer.parseInt(item.get("amount").toString()),
+                        Double.parseDouble(item.get("price").toString()));
+                productDto.setId(UUID.fromString(item.get("id").toString()));
+                products.add(productDto);
+            }
+            return products;
+        }
+
         private List<ProductDto> persistDefaultProductDtos() {
-            final ProductDto productDto1 = persistProduct("code1");
-            final ProductDto productDto2 = persistProduct("code2");
-            final ProductDto productDto3 = persistProduct("code3");
-            return List.of(productDto1, productDto2, productDto3);
+            Set<Product> newProducts = new HashSet<>();
+            List<ProductDto> productDtos = new ArrayList<>();
+            final ProductMapper instance = ProductMapper.INSTANCE;
+            for (int i = 1; i <= 20; i++) {
+                String name = String.format("name%02d", i);
+                String code = String.format("code%02d", i);
+                FoodType foodType = FoodType.values()[i % 3];
+                final ProductDto productDto = newProductDto(name, code, foodType, i, i);
+                final Product product = instance.dtoToDocument(productDto);
+                productDto.setId(product.getId());
+                productDtos.add(productDto);
+                newProducts.add(product);
+            }
+            productRepository.saveAll(newProducts);
+            return productDtos;
         }
     }
 
@@ -187,7 +250,7 @@ class ProductRestControllerITest {
 
         @Test
         void updateCode() throws Exception {
-            final ProductDto productDto = persistProduct("code");
+            final ProductDto productDto = persistProductDto("code");
             productDto.setCode("code1");
 
             final ResultActions resultActions = saveProduct(JsonMapper.objectToString(productDto));
@@ -197,7 +260,7 @@ class ProductRestControllerITest {
 
         @Test
         void duplicateCode() throws Exception {
-            persistProduct("code");
+            persistProductDto("code");
             final ProductDto productDto = newProductDto("code");
 
             final ResultActions resultActions = saveProduct(JsonMapper.objectToString(productDto));
@@ -262,7 +325,7 @@ class ProductRestControllerITest {
 
         @Test
         void happyPath() throws Exception {
-            final UUID id = persistProduct("code").getId();
+            final UUID id = persistProductDto("code").getId();
 
             deleteProduct(id.toString()).andExpect(status().isOk());
         }
@@ -292,7 +355,7 @@ class ProductRestControllerITest {
 
         @Test
         void happyPath() throws Exception {
-            final String code = persistProduct("code").getCode();
+            final String code = persistProductDto("code").getCode();
 
             final ResultActions resultActions = getProductByCode(code).andExpect(status().isOk());
 
@@ -317,18 +380,23 @@ class ProductRestControllerITest {
         }
     }
 
-    private ProductDto persistProduct(String code) {
+    private ProductDto persistProductDto(String code) {
         final Product product = ProductMapper.INSTANCE.dtoToDocument(newProductDto(code));
         return ProductMapper.INSTANCE.documentToDto(productRepository.save(product));
     }
 
     private ProductDto newProductDto(String code) {
-        final Product product = new Product();
-        product.setName(code);
+        return newProductDto(code, code, FoodType.FOOD, 1, 1);
+    }
+
+    private ProductDto newProductDto(String name, String code, FoodType foodType, int amount, double price) {
+        final ProductDto product = new ProductDto();
+        product.setName(name);
         product.setCode(code);
-        product.setFoodType(FoodType.FOOD);
-        product.setAmount(1);
-        return ProductMapper.INSTANCE.documentToDto(product);
+        product.setFoodType(foodType);
+        product.setAmount(amount);
+        product.setPrice(price);
+        return product;
     }
 
     private ResultActions getProduct(String id) throws Exception {
@@ -341,10 +409,19 @@ class ProductRestControllerITest {
                 .contentType(MediaType.APPLICATION_JSON));
     }
 
-    private ResultActions getAllProducts(String name) throws Exception {
+    private ResultActions getAllProducts(String name, Integer page, Integer size, List<String> sort) throws Exception {
         MockHttpServletRequestBuilder requestBuilder = get(PRODUCT_URL + "/all");
         if (name != null) {
             requestBuilder.param("name", name);
+        }
+        if (page != null) {
+            requestBuilder.param("page", page.toString());
+        }
+        if (size != null) {
+            requestBuilder.param("size", size.toString());
+        }
+        if (!CollectionUtils.isEmpty(sort)) {
+            sort.forEach(s -> requestBuilder.param("sort", s));
         }
         return mockMvc.perform(requestBuilder);
     }
