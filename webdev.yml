@@ -16,5 +16,20 @@ services:
     ports:
       - "8080:8080"
 
+  rootconfig:
+    image: lacribeiro11/registersystem-rootconfig:latest
+    ports:
+      - "9000:80"
+
+  checkout:
+    image: lacribeiro11/registersystem-checkout:latest
+    ports:
+      - "9001:80"
+
+  productmanagement:
+    image: lacribeiro11/registersystem-productmanagement:latest
+    ports:
+      - "9002:80"
+
 volumes:
   mongodb-data:
