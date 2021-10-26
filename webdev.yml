@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  db:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    env_file:
+      - ./mongodb-auth.env
+    volumes:
+      - mongodb-data:/data/db
+
+  registersystem-backend:
+    image: lacribeiro11/registersystem-backend:latest
+    env_file:
+      - ./mongodb.env
+    ports:
+      - "8080:8080"
+
+  rootconfig:
+    image: lacribeiro11/registersystem-rootconfig:latest
+    ports:
+      - "9000:80"
+
+  checkout:
+    image: lacribeiro11/registersystem-checkout:latest
+    ports:
+      - "9001:80"
+
+  productmanagement:
+    image: lacribeiro11/registersystem-productmanagement:latest
+    ports:
+      - "9002:80"
+
+volumes:
+  mongodb-data:
