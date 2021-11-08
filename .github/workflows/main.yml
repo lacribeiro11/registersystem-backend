@@ -55,3 +55,14 @@ jobs:
           push: true
           tags: lacribeiro11/registersystem-backend:latest
 
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'NEEDED_PLACEHOLDER'
+
+      - name: Adding Known Hosts
+        run: ssh-keyscan -p 3333 -H 85.235.66.255 >> ~/.ssh/known_hosts
+
+      - name: Run ssh
+        run: ssh luisribeiro@85.235.66.255 -p 3333 'ls -la'
