@@ -18,4 +18,4 @@ jobs:
         username: luisribeiro
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 3333
-        script: whoami
+        script: docker stack deploy --compose-file ./docker-swarm/webdev.yml webdev
