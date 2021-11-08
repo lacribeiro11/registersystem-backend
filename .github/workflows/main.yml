@@ -60,6 +60,7 @@ jobs:
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: 'NEEDED_PLACEHOLDER'
+          if_key_exists: ignore
 
       - name: Adding Known Hosts
         run: ssh-keyscan -p 3333 -H 85.235.66.255 >> ~/.ssh/known_hosts
