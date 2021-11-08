@@ -1,9 +1,8 @@
 name: Build and Deploy CI
 
 on:
-  pull_request:
-    branches: [ develop ]
-    types: [ closed ]
+  push:
+    branches: [ feature/* ]
 
   workflow_dispatch:
 
